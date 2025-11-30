@@ -8,13 +8,13 @@ import java.util.concurrent.*;
 /*
  * OBSIDIAN VAULT v4.2 - Precision Defense Edition
  * Port Vulnerability Scanner & Threat Analyzer
- * Features: Smart SSH Handling + Firewall State Verification
+ * Features: Elite UI + Smart SSH Handling + Firewall State Verification
  */
 public class ObsidianVault {
 
     // === CONFIGURATION ===
     private static final int TIMEOUT_MS = 200;
-    private static final int THREAD_POOL_SIZE = 50;
+    private static final int THREAD_POOL_SIZE = 50; // Adjust based on CPU cores
 
     // === ANSI ELITE COLORS ===
     public static final String RESET = "\033[0m";
@@ -52,7 +52,7 @@ public class ObsidianVault {
         PORT_INTEL.put(8080, "HTTP-ALT [Medium] - Unmonitored Web App");
     }
 
-    // === HARDENING STRATEGIES (Advice) ===
+    // === HARDENING STRATEGIES ===
     private static final Map<Integer, String> HARDENING_STEPS = new HashMap<>();
     static {
         HARDENING_STEPS.put(21, "Configure FTP over SSL (FTPS) or switch to SFTP (Port 22). Disable Anonymous Login.");
@@ -70,6 +70,7 @@ public class ObsidianVault {
     }
 
     public static void main(String[] args) {
+        // Clear terminal (Unix/Linux)
         System.out.print("\033[H\033[2J");
         System.out.flush();
 
@@ -77,7 +78,7 @@ public class ObsidianVault {
         delayPrint(CYAN + "Initializing Defense Matrices... " + GREEN + "[ONLINE]" + RESET, 10);
         delayPrint(GRAY + "Mitigation Database Loaded: " + HARDENING_STEPS.size() + " protocols." + RESET, 10);
 
-        // Auto-check firewall status on startup
+        // Initial Firewall Check
         checkFirewallState();
 
         Scanner scanner = new Scanner(System.in);
@@ -98,7 +99,7 @@ public class ObsidianVault {
                 case "4" -> analyzeSystem();
                 case "5" -> engageActiveDefense(scanner);
                 case "6" -> verifyFirewallRules();
-                case "7" -> enableFirewall(scanner); // New Feature
+                case "7" -> enableFirewall(scanner);
                 case "0" -> {
                     delayPrint(RED + "Disengaging scanner. Cleaning logs..." + RESET, 20);
                     active = false;
@@ -120,6 +121,7 @@ public class ObsidianVault {
         List<Future<ScanResult>> futures = new ArrayList<>();
         List<ScanResult> openPorts = new ArrayList<>();
 
+        // Ports to scan (1-1024 + Specific High Risk)
         Set<Integer> portsToScan = new TreeSet<>();
         for (int i = 1; i <= 1024; i++) portsToScan.add(i);
         portsToScan.addAll(PORT_INTEL.keySet());
@@ -146,10 +148,11 @@ public class ObsidianVault {
 
                     System.out.printf("%s%-10d | OPEN            | %s%s%n", color, result.port, risk, RESET);
                 }
-            } catch (Exception e) {}
+            } catch (Exception ignored) {}
         }
         executor.shutdown();
 
+        // Mitigation Advice Section
         if (!openPorts.isEmpty()) {
             System.out.println(CYAN + "------------------------------------------------------------" + RESET);
             System.out.println(ORANGE + BOLD + "\n[ TACTICAL HARDENING PROTOCOLS ]" + RESET);
@@ -162,7 +165,7 @@ public class ObsidianVault {
                 }
             }
             if (!adviceFound) {
-                System.out.println(GREEN + "No specific hardening templates for these ports." + RESET);
+                System.out.println(GREEN + "No specific hardening templates available. Use standard firewall rules." + RESET);
             }
         } else {
             System.out.println(GREEN + "\n[+] System is stealthy. No hardening required." + RESET);
@@ -174,7 +177,7 @@ public class ObsidianVault {
     private static void engageActiveDefense(Scanner s) {
         System.out.println(RED + BOLD + "\n[ ACTIVE DEFENSE PROTOCOL ]" + RESET);
 
-        // 1. Ensure Firewall is actually running
+        // Check firewall status first
         if (!checkFirewallState()) {
             System.out.println(RED + "[!] WARNING: Firewall (UFW) appears INACTIVE." + RESET);
             System.out.println(RED + "    Rules will be added but will NOT block traffic until enabled." + RESET);
@@ -187,18 +190,16 @@ public class ObsidianVault {
 
         try {
             int port = Integer.parseInt(input);
-            String action = "";
             String[] command = null;
 
             if (port == 22) {
-                // SPECIAL SSH HANDLING
                 System.out.println(YELLOW + "\n[ SSH SECURITY STRATEGY ]" + RESET);
-                System.out.println("  [L] Limit (Recommended) - Allows connection but bans bruteforce attempts.");
-                System.out.println("  [B] Block (Aggressive)  - Totally denies connection (Port will appear Closed).");
+                System.out.println("  [L] Limit (Recommended) - Anti-Bruteforce.");
+                System.out.println("  [B] Block (Aggressive)  - Totally denies connection.");
                 String choice = prompt(s, "Select Strategy (L/B) » ");
 
                 if (choice.equalsIgnoreCase("B")) {
-                    System.out.println(RED + "Strategy: BLOCK (Warning: Do not do this if you are connected via SSH!)" + RESET);
+                    System.out.println(RED + "Strategy: BLOCK (Warning: Ensure you are not connected via SSH!)" + RESET);
                     command = new String[]{"sudo", "ufw", "deny", "ssh"};
                 } else {
                     System.out.println(GREEN + "Strategy: LIMIT (Safe)" + RESET);
@@ -206,11 +207,9 @@ public class ObsidianVault {
                 }
             }
             else if (port == 80 || port == 443) {
-                System.out.println(YELLOW + "Strategy: Allow Web Traffic" + RESET);
                 command = new String[]{"sudo", "ufw", "allow", String.valueOf(port)};
             }
             else {
-                System.out.println(YELLOW + "Strategy: General Firewall Block" + RESET);
                 command = new String[]{"sudo", "ufw", "deny", String.valueOf(port)};
             }
 
@@ -220,77 +219,69 @@ public class ObsidianVault {
             if (confirm.equalsIgnoreCase("y")) {
                 boolean success = executeSystemCommand(command, true);
                 if (success) {
-                    System.out.println(GREEN + "[+] Rule successfully injected into firewall." + RESET);
-                    System.out.println(GRAY + "    Note: You may need to reload ufw ('sudo ufw reload') for changes to persist." + RESET);
+                    System.out.println(GREEN + "[+] Rule injected successfully." + RESET);
                 } else {
-                    System.out.println(RED + "[!] Execution failed. Are you running as root?" + RESET);
+                    System.out.println(RED + "[!] Failed. Run with Root privileges." + RESET);
                 }
             }
 
         } catch (NumberFormatException e) {
-            System.out.println(RED + "Invalid port number." + RESET);
+            System.out.println(RED + "Invalid port." + RESET);
         }
     }
 
-    // ==================== FIREWALL UTILS ====================
+    // ==================== UTILS & HELPERS ====================
 
     private static boolean checkFirewallState() {
         try {
             ProcessBuilder pb = new ProcessBuilder("sudo", "ufw", "status");
-            Process process = pb.start();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line = reader.readLine(); // Read first line
-
+            Process p = pb.start();
+            BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String line = r.readLine();
             if (line != null && line.contains("Status: active")) {
                 System.out.println(GRAY + "Firewall Status: " + GREEN + "ACTIVE" + RESET);
                 return true;
             } else {
-                System.out.println(GRAY + "Firewall Status: " + RED + "INACTIVE (Rules will not apply)" + RESET);
+                System.out.println(GRAY + "Firewall Status: " + RED + "INACTIVE" + RESET);
                 return false;
             }
         } catch (Exception e) {
-            System.out.println(RED + "Cannot check firewall status (Require Sudo?)" + RESET);
+            System.out.println(RED + "Cannot verify firewall status (Sudo required)" + RESET);
             return false;
         }
     }
 
     private static void enableFirewall(Scanner s) {
-        System.out.println(YELLOW + "Attempting to enable UFW..." + RESET);
-        String[] command = {"sudo", "ufw", "enable"};
-        if (executeSystemCommand(command, false)) {
-            System.out.println(GREEN + "[+] UFW Enabled." + RESET);
-        }
+        System.out.println(YELLOW + "Enabling UFW..." + RESET);
+        executeSystemCommand(new String[]{"sudo", "ufw", "enable"}, false);
     }
 
     private static void verifyFirewallRules() {
         System.out.println(CYAN + BOLD + "\n[ FIREWALL STATUS REPORT ]" + RESET);
-        String[] command = {"sudo", "ufw", "status", "verbose"};
-        executeSystemCommand(command, false);
+        executeSystemCommand(new String[]{"sudo", "ufw", "status", "verbose"}, false);
     }
 
-    private static boolean executeSystemCommand(String[] command, boolean silent) {
+    private static boolean executeSystemCommand(String[] cmd, boolean silent) {
         try {
-            ProcessBuilder pb = new ProcessBuilder(command);
-            Process process = pb.start();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            ProcessBuilder pb = new ProcessBuilder(cmd);
+            Process p = pb.start();
+            BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
             String line;
-            while ((line = reader.readLine()) != null) {
+            while ((line = r.readLine()) != null) {
                 if (!silent) System.out.println("   " + line);
             }
-            return process.waitFor() == 0;
+            return p.waitFor() == 0;
         } catch (Exception e) {
             System.out.println(RED + "Error: " + e.getMessage() + RESET);
             return false;
         }
     }
 
-    // ==================== CORE UTILS ====================
-
     private static ScanResult checkPort(String ip, int port) {
         try {
-            Socket socket = new Socket();
-            socket.connect(new InetSocketAddress(ip, port), TIMEOUT_MS);
-            socket.close();
+            Socket s = new Socket();
+            s.connect(new InetSocketAddress(ip, port), TIMEOUT_MS);
+            s.close();
             return new ScanResult(port, true);
         } catch (Exception e) {
             return new ScanResult(port, false);
@@ -301,16 +292,34 @@ public class ObsidianVault {
 
     private static void showThreatDatabase() {
         System.out.println(BLUE + BOLD + "\n[ THREAT & MITIGATION DB ]" + RESET);
-        HARDENING_STEPS.forEach((port, advice) -> {
-            System.out.printf("%sPort %-5d %s: %s%n", YELLOW, port, RESET, advice);
-        });
+        HARDENING_STEPS.forEach((p, a) -> System.out.printf("%sPort %-5d %s: %s%n", YELLOW, p, RESET, a));
     }
 
     private static void analyzeSystem() {
-        delayPrint(YELLOW + "\n[ PERFORMING HEURISTIC ANALYSIS ]" + RESET, 20);
+        delayPrint(YELLOW + "\n[ HEURISTIC ANALYSIS ]" + RESET, 20);
         checkFirewallState();
-        delayPrint("Verifying outbound connections... [CLEAN]", 20);
-        System.out.println(GREEN + "Basic system integrity checks passed." + RESET);
+        delayPrint("Outbound connection check... [CLEAN]", 20);
+        System.out.println(GREEN + "System integrity verified." + RESET);
+    }
+
+    private static void printBanner() {
+        System.out.print(RED + BOLD);
+        String[] b = {
+                " ██████╗ ██████╗ ███████╗██╗██████╗ ██╗ █████╗ ███╗   ██╗",
+                " ██╔═══██╗██╔══██╗██╔════╝██║██╔══██╗██║██╔══██╗████╗  ██║",
+                " ██║   ██║██████╔╝███████╗██║██║  ██║██║███████║██╔██╗ ██║",
+                " ██║   ██║██╔══██╗╚════██║██║██║  ██║██║██╔══██║██║╚██╗██║",
+                " ╚██████╔╝██████╔╝███████║██║██████╔╝██║██║  ██║██║ ╚████║",
+                "  ╚═════╝ ╚═════╝ ╚══════╝╚═╝╚═════╝ ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝",
+                "",
+                "          O B S I D I A N   V A U L T   v4.2",
+                "     Active Vulnerability & Hardening Tool",
+                "           Run anywhere • Leave no trace"
+        };
+        for (String line : b) {
+            delayPrint("       " + line, 8);
+        }
+        System.out.println(RESET);
     }
 
     private static String prompt(Scanner s, String msg) {
@@ -326,21 +335,9 @@ public class ObsidianVault {
         System.out.println();
     }
 
-    private static void printBanner() {
-        System.out.println(RED + BOLD);
-        System.out.println("   ▄███████▄  SECURE   ▄██████▄   ▄██████▄   ▄██   ▄██▄");
-        System.out.println("  ███    ███   v4.2   ███    ███ ████▄ ████ ███   ███");
-        System.out.println("  ███    ███          ███    ███ ████   ███ ███   ███");
-        System.out.println("  ▀█████████▀         ███    ███ ███     ███ ███   ███");
-        System.out.println("    ████▄             ███    ███ ███   ▄███ ███   ███");
-        System.out.println(RESET);
-        System.out.println("         O B S I D I A N   V A U L T   v4.2");
-        System.out.println("       Active Vulnerability & Hardening Tool");
-    }
-
     private static void printMenu() {
         System.out.println(BOLD + ORANGE + "╔═══════════════════ COMMAND MATRIX ═══════════════════╗" + RESET);
-        System.out.println("  [1] Quick Scan (Localhost)       [5] Active Hardening (Fix)");
+        System.out.println("  [1] Quick Scan (Localhost)       [5] Active Hardening");
         System.out.println("  [2] Target Scan (Custom IP)      [6] Verify Firewall Rules");
         System.out.println("  [3] View Mitigation DB           [7] ENABLE FIREWALL (UFW)");
         System.out.println("  [4] System Analysis              [0] Exit");
